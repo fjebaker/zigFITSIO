@@ -1,0 +1,6 @@
+id: 5gueomqrcaysj9grpe4ejquwrgljbju98dfqbugp2hslehhv
+name: zfits
+main: src/main.zig
+license: MIT
+description: cfitsio in zig
+dependencies:
