@@ -51,12 +51,16 @@ pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.b
         "f77_wrap1.c",      "f77_wrap2.c",        "f77_wrap3.c", "f77_wrap4.c",
     };
 
-    const cflags = [_][]const u8{ "-O2", "-Wl", "-Dg77Fortran" };
+    const cflags = switch (target.getOsTag()) {
+        .macos => [2][]const u8{ "-O2", "-Dmacintosh" },
+        else => [2][]const u8{ "-O2", "-Dg77Fortran" },
+    };
+
     inline for (sources) |f| {
         lib.addCSourceFile(CFITS_DIR ++ f, &cflags);
     }
     lib.linkLibC();
-    lib.linkSystemLibrary("zlib");
+    lib.linkSystemLibrary("z");
     lib.linkSystemLibrary("curl");
     return lib;
 }
