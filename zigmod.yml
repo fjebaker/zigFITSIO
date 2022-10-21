@@ -1,6 +1,6 @@
 id: 5gueomqrcaysj9grpe4ejquwrgljbju98dfqbugp2hslehhv
-name: zfits
+name: zigFITSIO
 main: src/main.zig
 license: MIT
-description: cfitsio in zig
+description: Zig wrapper around CFITSIO.
 dependencies:
