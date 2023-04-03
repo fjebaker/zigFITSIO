@@ -1,24 +1,18 @@
 const std = @import("std");
-
 const CFITS_DIR = "./vendor/cfitsio-4.0.0/";
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
     const libcfitsio = try createCFITSIO(b, target);
     libcfitsio.install();
 
-    const lib = b.addStaticLibrary(.{
-        .name = "zfits",
-        .root_source_file = .{ .path = "src/main.zig" },
-        .target = target,
-        .optimize = optimize,
+    _ = b.addModule("zfits", .{
+        .source_file = .{ .path = "src/main.zig" },
+        .dependencies = &.{},
     });
-    lib.linkLibC();
-    lib.linkLibrary(libcfitsio);
-    lib.addIncludePath(CFITS_DIR);
-    lib.install();
+    // todo: https://github.com/ziglang/zig/pull/14731
 
     const main_tests = b.addTest(.{
         .root_source_file = .{ .path = "src/main.zig" },
@@ -33,7 +27,7 @@ pub fn build(b: *std.build.Builder) !void {
     test_step.dependOn(&main_tests.run().step);
 }
 
-pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.LibExeObjStep {
+pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.CompileStep {
     const lib = b.addStaticLibrary(.{
         .name = "cfitsio",
         .target = target,

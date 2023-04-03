@@ -36,7 +36,7 @@ test "read-header" {
 
     std.debug.print("Dimensions {d} x {d}\n", .{ rows, cols });
 
-    var data = try hdu.BinaryTable.readColumnTyped(f32, 1, alloc);
+    var data = try hdu.BinaryTable.readColumnTyped(f32, 1, alloc, .{});
     defer alloc.free(data);
 
     std.debug.print("{any}\n", .{data});
