@@ -3,33 +3,42 @@ const std = @import("std");
 const CFITS_DIR = "./vendor/cfitsio-4.0.0/";
 
 pub fn build(b: *std.build.Builder) !void {
-    const mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
 
     const libcfitsio = try createCFITSIO(b, target);
     libcfitsio.install();
 
-    const lib = b.addStaticLibrary("zfits", "src/main.zig");
-    lib.setBuildMode(mode);
+    const lib = b.addStaticLibrary(.{
+        .name = "zfits",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     lib.linkLibC();
     lib.linkLibrary(libcfitsio);
     lib.addIncludePath(CFITS_DIR);
     lib.install();
 
-    const main_tests = b.addTest("src/main.zig");
-    main_tests.setBuildMode(mode);
+    const main_tests = b.addTest(.{
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     main_tests.linkLibC();
     main_tests.linkLibrary(libcfitsio);
     main_tests.addIncludePath(CFITS_DIR);
 
     const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&main_tests.step);
+    test_step.dependOn(&main_tests.run().step);
 }
 
 pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.LibExeObjStep {
-    const lib = b.addStaticLibrary("cfitsio", null);
-    lib.setBuildMode(.ReleaseSafe);
-    lib.setTarget(target);
+    const lib = b.addStaticLibrary(.{
+        .name = "cfitsio",
+        .target = target,
+        .optimize = .ReleaseSafe,
+    });
 
     const sources = [_][]const u8{
         "buffers.c",     "cfileio.c",        "checksum.c",         "drvrfile.c",  "drvrmem.c",
