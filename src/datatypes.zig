@@ -87,14 +87,16 @@ pub const DataType = union(enum) {
         var dt: PrimativeType = undefined;
         for (s, 0..) |t, i| {
             if (t <= '9') {
-                size += (try std.fmt.parseInt(usize, &[1]u8{t}, 10)) * std.math.pow(usize, 10, i);
                 continue;
             }
             dt = switch (t) {
                 'E' => .Float32,
                 'D' => .Float64,
-                else => continue,
+                // todo: haven't handled these yet
+                else => unreachable,
             };
+            // read in the size
+            size = try std.fmt.parseInt(usize, s[0..i], 10);
             break;
         }
         if (size > 1) {

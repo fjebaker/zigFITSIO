@@ -39,7 +39,7 @@ pub const HDUInfo = struct {
     }
 };
 
-const ColumnInfo = struct {
+pub const ColumnInfo = struct {
     label: FITSString,
     data_type: DataType,
     unit: ?FITSString,
@@ -63,6 +63,22 @@ pub const HDU = union(HDUType) {
             self.info.ensureChosen();
             return try self.info.parent_file.getNumRows();
         }
+        pub fn getValueTyped(
+            self: *const Self,
+            comptime T: type,
+            column: usize,
+            row: usize,
+        ) !T {
+            self.info.ensureChosen();
+            var buf: [1]T = undefined;
+            try self.info.parent_file.readColumnInto(
+                T,
+                column,
+                &buf,
+                .{ .first_row = row },
+            );
+            return buf[0];
+        }
         pub fn getColumnTyped(
             self: *const Self,
             comptime T: type,
@@ -73,6 +89,50 @@ pub const HDU = union(HDUType) {
             self.info.ensureChosen();
             const size = try self.getNumRows();
             return self.info.parent_file.getColumnTyped(T, index, size, alloc, opt);
+        }
+
+        pub fn getVectorTyped(
+            self: *const Self,
+            comptime T: type,
+            alloc: std.mem.Allocator,
+            col: usize,
+            row: usize,
+        ) ![]T {
+            self.info.ensureChosen();
+            const info = try self.getColumnInfo(col);
+            const n_items = info.data_type.Vector.len;
+
+            var arr = try alloc.alloc(T, n_items);
+            errdefer alloc.free(arr);
+            for (1..n_items) |i| {
+                try self.info.parent_file.readColumnInto(
+                    T,
+                    col,
+                    arr[i - 1 .. i],
+                    .{ .first_row = row, .first_element = i },
+                );
+            }
+            return arr;
+        }
+        pub fn getColumnVectorTyped(
+            self: *const Self,
+            comptime T: type,
+            index: usize,
+            alloc: std.mem.Allocator,
+        ) ![][]T {
+            self.info.ensureChosen();
+
+            const nrows = try self.getNumRows();
+            var list = try std.ArrayList([]T).initCapacity(alloc, nrows);
+            errdefer list.deinit();
+            errdefer for (list.items) |item| {
+                alloc.free(item);
+            };
+            for (1..nrows) |row| {
+                var vec = try self.getVectorTyped(T, index, row, alloc);
+                list.appendAssumeCapacity(vec);
+            }
+            return list.toOwnedSlice();
         }
         pub fn getColumnInfo(self: *const Self, i: usize) !ColumnInfo {
             self.info.ensureChosen();

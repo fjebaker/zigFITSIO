@@ -15,6 +15,7 @@ pub const handleErrorCode = fitserrors.handleErrorCode;
 const hdu = @import("hdu.zig");
 pub const HDU = hdu.HDU;
 pub const HDUInfo = hdu.HDUInfo;
+pub const ColumnInfo = hdu.ColumnInfo;
 const make_hdu = hdu.make_hdu;
 
 pub const FITS = struct {
