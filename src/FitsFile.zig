@@ -3,6 +3,7 @@ const c = @import("c.zig");
 const datatypes = @import("datatypes.zig");
 
 const DataType = datatypes.DataType;
+const PrimativeType = datatypes.PrimativeType;
 const FITSRecord = datatypes.FITSRecord;
 const FITSString = datatypes.FITSString;
 const CARD_BYTE_LENGTH = datatypes.CARD_BYTE_LENGTH;
@@ -217,7 +218,7 @@ pub fn readRecordValueString(
     var comment: FITSRecord = undefined;
     _ = c.fits_read_key(
         self.fp,
-        DataType.String.toFITS(),
+        PrimativeType.toFITS(.String),
         name.ptr,
         @ptrCast(*anyopaque, &value),
         &comment,

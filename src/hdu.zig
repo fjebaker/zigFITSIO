@@ -99,7 +99,11 @@ pub const HDU = union(HDUType) {
                 else => return err,
             };
 
-            return .{ .label = label, .data_type = DataType.fromFITSString(format), .unit = unit };
+            return .{
+                .label = label,
+                .data_type = try DataType.fromFITSString(format),
+                .unit = unit,
+            };
         }
         pub fn getAllColumnInfo(self: *const Self, alloc: std.mem.Allocator) ![]ColumnInfo {
             self.info.ensureChosen();

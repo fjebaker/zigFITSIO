@@ -6,7 +6,7 @@ pub const NAME_BYTE_LENGTH = 8; // length of name in bytes
 pub const FITSRecord = [CARD_BYTE_LENGTH]u8;
 pub const FITSString = [NAME_BYTE_LENGTH + 1:0]u8;
 
-pub const DataType = enum {
+pub const PrimativeType = enum {
     Byte,
     String, // char **
     Short,
@@ -18,23 +18,7 @@ pub const DataType = enum {
     UnsignedInt64,
     Float32,
     Float64,
-    pub fn fromFITS(t: c_int) DataType {
-        return switch (t) {
-            c.TBYTE => .Byte,
-            c.TSTRING => .String,
-            c.TSHORT => .Short,
-            c.TUSHORT => .UnsignedShort,
-            c.TINT => .Int32,
-            c.TUINT => .UnsignedInt32,
-            c.TLONG => .Int64,
-            c.TLONGLONG => .Int128,
-            c.TULONG => .UnsignedInt64,
-            c.TFLOAT => .Float32,
-            c.TDOUBLE => .Float64,
-            else => unreachable,
-        };
-    }
-    pub fn toFITS(t: DataType) c_int {
+    pub fn toFITS(t: PrimativeType) c_int {
         return switch (t) {
             .Byte => c.TBYTE,
             .String => c.TSTRING,
@@ -49,17 +33,48 @@ pub const DataType = enum {
             .Float64 => c.TDOUBLE,
         };
     }
-    pub fn fromType(comptime T: type) DataType {
-        return switch (T) {
-            f32 => .Float32,
-            f64 => .Float64,
-            u32 => .UnsignedInt32,
-            i32 => .Int32,
+};
+
+pub const DataType = union(enum) {
+    Value: PrimativeType,
+    Vector: struct { subtype: PrimativeType, len: usize },
+    pub fn fromFITS(t: c_int) DataType {
+        return switch (t) {
+            c.TBYTE => DataType.Value{.Byte},
+            c.TSTRING => DataType.Value{.String},
+            c.TSHORT => DataType.Value{.Short},
+            c.TUSHORT => DataType.Value{.UnsignedShort},
+            c.TINT => .{ .Value = .Int32 },
+            c.TUINT => .{ .Value = .UnsignedInt32 },
+            c.TLONG => .{ .Value = .Int64 },
+            c.TLONGLONG => .{ .Value = .Int128 },
+            c.TULONG => .{ .Value = .UnsignedInt64 },
+            c.TFLOAT => .{ .Value = .Float32 },
+            c.TDOUBLE => .{ .Value = .Float64 },
             else => unreachable,
         };
     }
-    pub fn toType(comptime t: DataType) type {
+    pub fn toFITS(t: DataType) c_int {
+        return t.primative().toFITS();
+    }
+    pub fn fromType(comptime T: type) DataType {
+        return switch (T) {
+            f32 => .{ .Value = .Float32 },
+            f64 => .{ .Value = .Float64 },
+            u32 => .{ .Value = .UnsignedInt32 },
+            i32 => .{ .Value = .Int32 },
+            else => unreachable,
+        };
+    }
+    pub fn primative(t: DataType) PrimativeType {
         return switch (t) {
+            .Value => |v| v,
+            .Vector => |v| v.subtype,
+        };
+    }
+
+    pub fn toType(comptime t: DataType) type {
+        return switch (t.primative()) {
             .Float32 => f32,
             .Float64 => f64,
             .UnsignedInt32 => u32,
@@ -67,16 +82,25 @@ pub const DataType = enum {
             else => unreachable,
         };
     }
-    pub fn fromFITSString(s: FITSString) DataType {
-        for (s) |t| {
-            if (t <= '9') continue;
-            return switch (t) {
+    pub fn fromFITSString(s: FITSString) !DataType {
+        var size: usize = 0;
+        var dt: PrimativeType = undefined;
+        for (s, 0..) |t, i| {
+            if (t <= '9') {
+                size += (try std.fmt.parseInt(usize, &[1]u8{t}, 10)) * std.math.pow(usize, 10, i);
+                continue;
+            }
+            dt = switch (t) {
                 'E' => .Float32,
                 'D' => .Float64,
                 else => continue,
             };
+            break;
         }
-        unreachable;
+        if (size > 1) {
+            return .{ .Vector = .{ .subtype = dt, .len = size } };
+        }
+        return .{ .Value = dt };
     }
 };
 
