@@ -1,61 +1,63 @@
 const std = @import("std");
-const c = @import("c.zig");
-const fits = @import("fits.zig");
 
-const FITS = fits.FITS;
+const FITSFile = @import("FitsFile.zig");
 
-const testing = std.testing;
+const datatypes = @import("datatypes.zig");
+pub const DataType = datatypes.DataType;
+pub const FITSRecord = datatypes.FITSRecord;
+pub const FITSString = datatypes.FITSString;
+pub const HDUType = datatypes.HDUType;
 
-test "read-header" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    var alloc = gpa.allocator();
+const fitserrors = @import("errors.zig");
+pub const FITSError = fitserrors.FITSError;
+pub const handleErrorCode = fitserrors.handleErrorCode;
 
-    const filename = "/Users/lx21966/Developer/relline/rel_table.fits";
-    var f = try FITS.initFromFile(filename);
-    defer f.deinit();
+const hdu = @import("hdu.zig");
+pub const HDU = hdu.HDU;
+pub const HDUInfo = hdu.HDUInfo;
+const make_hdu = hdu.make_hdu;
 
-    std.debug.print("Num HDUs: {d}\n", .{f.num_hdus});
-    // var hdutypes = try f.getAllHDUTypes(alloc);
-    // defer alloc.free(hdutypes);
+pub const FITS = struct {
+    const Self = @This();
 
-    // for (hdutypes) |t| {
-    //     std.debug.print("{}\n", .{t});
-    // }
+    fits_file: FITSFile,
+    num_hdus: usize,
+    path: []const u8,
 
-    const hdu = try f.getHDU(2);
-    var headers = try hdu.readHeader(alloc);
-    defer alloc.free(headers);
+    pub fn initFromFile(path: []const u8) !Self {
+        var fits_file = try FITSFile.open(path);
+        errdefer fits_file.close();
 
-    for (headers) |h| {
-        std.debug.print("{s}\n", .{h});
+        const num_hdus = try fits_file.readNumHDUs();
+
+        return .{
+            .fits_file = fits_file,
+            .num_hdus = num_hdus,
+            .path = path,
+        };
     }
 
-    const cols = try hdu.BinaryTable.getNumColumns();
-    const rows = try hdu.BinaryTable.getNumRows();
+    pub fn deinit(self: *Self) void {
+        self.fits_file.close();
+    }
 
-    std.debug.print("Dimensions {d} x {d}\n", .{ rows, cols });
+    /// Return all records. Caller owns the memory.
+    pub fn getAllInfo(self: *Self, alloc: std.mem.Allocator) ![]FITSRecord {
+        return (try self.getHDU(self.fits_file.getCurrentHDUIndex())).readHeader(alloc);
+    }
 
-    var data = try hdu.BinaryTable.readColumnTyped(f32, 1, alloc, .{});
-    defer alloc.free(data);
+    pub fn readAllHDUs(self: *Self, alloc: std.mem.Allocator) ![]HDU {
+        var list = try std.ArrayList(HDU).initCapacity(alloc, self.num_hdus);
+        errdefer list.deinit();
+        // HDU numbers start at 1
+        for (1..self.num_hdus + 1) |i| {
+            list.appendAssumeCapacity(try self.getHDU(i));
+        }
+        return list.toOwnedSlice();
+    }
 
-    std.debug.print("{any}\n", .{data});
-
-    std.debug.print("\n", .{});
-
-    // var infos = try f.getAllInfo(alloc);
-    // defer alloc.free(infos);
-
-    // for (infos) |info| {
-    //     std.debug.print("{s}\n", .{info});
-    // }
-
-    // try f.readInfo();
-    // var i: u32 = 1;
-    // while (i <= f.nkeys) : (i += 1) {
-    //     std.debug.print(
-    //         "{s}\n",
-    //         .{f.readRecord(i)},
-    //     );
-    // }
-}
+    pub fn getHDU(self: *Self, index: usize) !HDU {
+        const hdu_type = try self.fits_file.selectHDU(index);
+        return make_hdu(self.fits_file, hdu_type, index);
+    }
+};
