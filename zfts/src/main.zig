@@ -19,6 +19,7 @@ const Selection = struct {
     vector_index: ?usize = null,
     column_name: ?[]const u8 = null,
     max_lines: usize = 10,
+    trailing: bool = true,
 
     pub fn parse(s: []const u8) !Selection {
         var selection: Selection = .{};
@@ -67,6 +68,7 @@ const Errors = error{ NoFileGiven, InvalidSelection };
 fn parseArgs() !Args {
     const params = comptime clap.parseParamsComptime(
         \\--help               Display this help and exit.
+        \\--all                Show all entries.
         \\-h, --header         Print the header for the specified HDU.
         \\-t, --table          Print a table summary.
         \\-n, --number <usize> Maximum number of entries to display.
@@ -94,18 +96,20 @@ fn parseArgs() !Args {
         std.os.exit(1);
     };
 
-    var selection: Selection = blk: {
-        if (res.positionals.len > 1) {
-            var selection = try Selection.parse(res.positionals[1]);
-            // set max lines if given
-            if (res.args.number) |num| {
-                selection.max_lines = num;
-            }
-            break :blk selection;
-        } else {
-            break :blk .{};
-        }
-    };
+    var selection: Selection = if (res.positionals.len > 1)
+        try Selection.parse(res.positionals[1])
+    else
+        .{};
+
+    // set max lines if given
+    if (res.args.number) |num| {
+        selection.max_lines = num;
+        selection.trailing = false;
+    }
+    if (res.args.all != 0) {
+        selection.max_lines = 10_000;
+        selection.trailing = false;
+    }
 
     const mode: Modes = if (res.args.header != 0)
         .Header
@@ -142,7 +146,7 @@ pub fn main() !void {
             if (args.selection.hdu_index) |_| {
                 try printTableSummary(&f, stdout, alloc, args.selection);
             } else {
-                try printSummary(&f, stdout, alloc);
+                try printSummary(&f, stdout, alloc, args.selection);
             }
         },
         .Table => {
@@ -164,18 +168,18 @@ fn printHeader(f: *zfits.FITS, stdout: anytype, alloc: std.mem.Allocator, s: Sel
     }
 }
 
-fn printSummary(f: *zfits.FITS, stdout: anytype, alloc: std.mem.Allocator) !void {
+fn printSummary(f: *zfits.FITS, stdout: anytype, alloc: std.mem.Allocator, selection: Selection) !void {
     var hdus = try f.readAllHDUs(alloc);
     defer alloc.free(hdus);
-
     try stdout.print(comptime ansi.color.Bold("{s: <4} {s: <8} {s: <8}\n"), .{ "HDU", "Name", "Type" });
-    for (hdus[1..], 2..) |hdu, i| {
-        try printTableInfo(stdout, alloc, i, hdu);
-        if (i > 10) {
-            try stdout.print(" .\n", .{});
-            try stdout.print(" .\n", .{});
-            const j = hdus.len - 1;
-            try printTableInfo(stdout, alloc, j, hdus[j]);
+    for (hdus, 1..) |hdu, i| {
+        try printHDUInfo(stdout, alloc, i, hdu);
+        if (i > selection.max_lines - 1) {
+            if (selection.trailing) {
+                try stdout.print(" ... +{d} rows\n", .{hdus.len - i - 2});
+                const j = hdus.len - 1;
+                try printHDUInfo(stdout, alloc, j, hdus[j]);
+            } else try stdout.print(" ... +{d} rows\n", .{hdus.len - i - 1});
             break;
         }
     }
@@ -259,8 +263,8 @@ fn printColumns(
         try stdout.print("\n", .{});
     } else {
         for (1..nrows + 1) |row| {
-            if (row - 1 > selection.max_lines) {
-                try stdout.print(" ... +{d} rows\n", .{nrows - row});
+            if (row > selection.max_lines) {
+                try stdout.print(" ... +{d} rows\n", .{nrows - row + 1});
                 break;
             }
             try printRow(hdu, stdout, alloc, infos, columns, row);
@@ -312,13 +316,13 @@ fn printRow(
     }
 }
 
-fn printTableInfo(
+fn printHDUInfo(
     stdout: anytype,
     alloc: std.mem.Allocator,
     i: usize,
     hdu: zfits.HDU,
 ) !void {
-    var name = try hdu.readNameTrimmed(alloc);
+    var name = hdu.readNameTrimmed(alloc) catch try alloc.dupe(u8, "--");
     defer alloc.free(name);
     try stdout.print(" {d: <3} {s: <8} {s: <8}", .{ i, name, @tagName(hdu.getType()) });
     switch (hdu) {
