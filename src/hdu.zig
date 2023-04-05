@@ -129,7 +129,7 @@ pub const HDU = union(HDUType) {
                 alloc.free(item);
             };
             for (1..nrows) |row| {
-                var vec = try self.getVectorTyped(T, index, row, alloc);
+                var vec = try self.getVectorTyped(T, alloc, index, row);
                 list.appendAssumeCapacity(vec);
             }
             return list.toOwnedSlice();
