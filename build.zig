@@ -71,5 +71,6 @@ pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.b
     lib.linkLibC();
     lib.linkSystemLibrary("z");
     lib.linkSystemLibrary("curl");
+    lib.installHeader(CFITS_DIR ++ "fitsio.h", "fitsio.h");
     return lib;
 }
