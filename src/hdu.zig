@@ -104,7 +104,7 @@ pub const HDU = union(HDUType) {
 
             var arr = try alloc.alloc(T, n_items);
             errdefer alloc.free(arr);
-            for (1..n_items) |i| {
+            for (1..n_items + 1) |i| {
                 try self.info.parent_file.readColumnInto(
                     T,
                     col,
