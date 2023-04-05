@@ -128,7 +128,7 @@ pub const HDU = union(HDUType) {
             errdefer for (list.items) |item| {
                 alloc.free(item);
             };
-            for (1..nrows) |row| {
+            for (1..nrows + 1) |row| {
                 var vec = try self.getVectorTyped(T, alloc, index, row);
                 list.appendAssumeCapacity(vec);
             }
