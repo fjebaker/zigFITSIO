@@ -1,6 +1,0 @@
-[submodule "vendor/zig-clap"]
-	path = vendor/zig-clap
-	url = https://github.com/Hejsil/zig-clap
-[submodule "vendor/zig-ansi"]
-	path = vendor/zig-ansi
-	url = https://github.com/nektro/zig-ansi
