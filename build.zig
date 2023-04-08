@@ -1,8 +1,5 @@
 const std = @import("std");
 
-// build test exe
-const exe = @import("zfts/build.zig");
-
 const CFITS_DIR = "./vendor/cfitsio-4.0.0/";
 
 pub fn build(b: *std.Build) !void {
@@ -12,7 +9,7 @@ pub fn build(b: *std.Build) !void {
     const libcfitsio = try createCFITSIO(b, target);
     libcfitsio.install();
 
-    const libmod = b.addModule("zfits", .{
+    _ = b.addModule("zfits", .{
         .source_file = .{ .path = "src/main.zig" },
         .dependencies = &.{},
     });
@@ -29,8 +26,6 @@ pub fn build(b: *std.Build) !void {
 
     const test_step = b.step("test", "Run library tests");
     test_step.dependOn(&main_tests.run().step);
-
-    exe.build(b, target, optimize, libmod, libcfitsio, CFITS_DIR);
 }
 
 pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.CompileStep {
