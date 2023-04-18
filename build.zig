@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
     const libcfitsio = try createCFITSIO(b, target);
-    libcfitsio.install();
+    b.installArtifact(libcfitsio);
 
     _ = b.addModule("zfits", .{
         .source_file = .{ .path = "src/main.zig" },
@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) !void {
     });
     // todo: https://github.com/ziglang/zig/pull/14731
 
-    const main_tests = b.addTest(.{
+    var main_tests = b.addTest(.{
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
@@ -23,9 +23,10 @@ pub fn build(b: *std.Build) !void {
     main_tests.linkLibC();
     main_tests.linkLibrary(libcfitsio);
     main_tests.addIncludePath(CFITS_DIR);
+    const main_test_runstep = b.addRunArtifact(main_tests);
 
     const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&main_tests.run().step);
+    test_step.dependOn(&main_test_runstep.step);
 }
 
 pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.CompileStep {
