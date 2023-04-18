@@ -78,7 +78,12 @@ extern int Fitsio_Pthread_Status;
 /*   This block of code should match a similar block in fitsio.h  */
 /*   and the block of code at the beginning of f77_wrap.h         */
 
-#if defined(__alpha) && ( defined(__unix__) || defined(__NetBSD__) )
+#if defined(__wasm32) || defined(__asmjs__)
+
+#define BYTESWAPPED TRUE
+#define LONGSIZE 32
+
+#elif defined(__alpha) && ( defined(__unix__) || defined(__NetBSD__) )
                                   /* old Dec Alpha platforms running OSF */
 #define BYTESWAPPED TRUE
 #define LONGSIZE 64
