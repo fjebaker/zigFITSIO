@@ -1,35 +1,42 @@
 const std = @import("std");
-const zlib = @import("vendor/zig-zlib/zlib.zig");
-const CFITS_DIR = "./vendor/cfitsio-4.0.0/";
+const zlib = @import("./vendor/zig-zlib/zlib.zig");
+
+fn _root() []const u8 {
+    return (std.fs.path.dirname(@src().file) orelse ".");
+}
+
+const ROOT = _root() ++ "/";
+pub const CFITS_DIR = ROOT ++ "vendor/cfitsio-4.0.0/";
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const libcfitsio = try createCFITSIO(b, target);
+    const libcfitsio = createCFITSIO(b, target);
+    libcfitsio.installHeader(CFITS_DIR ++ "fitsio.h", "fitsio.h");
+
     b.installArtifact(libcfitsio);
 
     _ = b.addModule("zfits", .{
-        .source_file = .{ .path = "src/main.zig" },
+        .source_file = .{ .path = "./src/main.zig" },
         .dependencies = &.{},
     });
     // todo: https://github.com/ziglang/zig/pull/14731
 
     var main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "./src/main.zig" },
         .target = target,
         .optimize = optimize,
     });
     main_tests.linkLibC();
     main_tests.linkLibrary(libcfitsio);
-    main_tests.addIncludePath(CFITS_DIR);
     const main_test_runstep = b.addRunArtifact(main_tests);
 
     const test_step = b.step("test", "Run library tests");
     test_step.dependOn(&main_test_runstep.step);
 }
 
-pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.build.CompileStep {
+pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.CompileStep {
     const lib = b.addStaticLibrary(.{
         .name = "cfitsio",
         .target = target,
@@ -68,6 +75,5 @@ pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.b
     const z = zlib.create(b, target, .ReleaseSafe);
     z.link(lib, .{});
     lib.linkSystemLibrary("curl");
-    lib.installHeader(CFITS_DIR ++ "fitsio.h", "fitsio.h");
     return lib;
 }
