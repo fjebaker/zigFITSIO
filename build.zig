@@ -1,5 +1,5 @@
 const std = @import("std");
-
+const zlib = @import("vendor/zig-zlib/zlib.zig");
 const CFITS_DIR = "./vendor/cfitsio-4.0.0/";
 
 pub fn build(b: *std.Build) !void {
@@ -65,7 +65,8 @@ pub fn createCFITSIO(b: *std.build.Builder, target: std.zig.CrossTarget) !*std.b
         lib.addCSourceFile(CFITS_DIR ++ f, &cflags);
     }
     lib.linkLibC();
-    lib.linkSystemLibrary("z");
+    const z = zlib.create(b, target, .ReleaseSafe);
+    z.link(lib, .{});
     lib.linkSystemLibrary("curl");
     lib.installHeader(CFITS_DIR ++ "fitsio.h", "fitsio.h");
     return lib;
