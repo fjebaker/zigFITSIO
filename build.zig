@@ -5,7 +5,7 @@ fn _root() []const u8 {
     return (std.fs.path.dirname(@src().file) orelse ".");
 }
 
-const ROOT = _root() ++ "/";
+pub const ROOT = _root() ++ "/";
 pub const CFITS_DIR = ROOT ++ "vendor/cfitsio-4.0.0/";
 
 pub fn build(b: *std.Build) !void {

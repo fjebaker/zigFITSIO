@@ -1,6 +1,7 @@
 const std = @import("std");
 const zigFITSIO = @import("./build.zig");
 
+const ROOT = zigFITSIO.ROOT;
 const CFITS_DIR = zigFITSIO.CFITS_DIR;
 
 pub const Library = struct {
@@ -16,11 +17,11 @@ pub const Library = struct {
 pub fn create(b: *std.Build, target: std.zig.CrossTarget) Library {
     const libcfitsio = zigFITSIO.createCFITSIO(b, target);
     _ = b.addModule("zfits", .{
-        .source_file = .{ .path = "./src/main.zig" },
+        .source_file = .{ .path = ROOT ++ "./src/main.zig" },
         .dependencies = &.{},
     });
     const zfitsio = b.addModule("zfits", .{
-        .source_file = .{ .path = "./src/main.zig" },
+        .source_file = .{ .path = ROOT ++ "./src/main.zig" },
         .dependencies = &.{},
     });
 
