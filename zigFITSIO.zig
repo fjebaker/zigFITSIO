@@ -9,7 +9,7 @@ pub const Library = struct {
     pub fn link(self: @This(), other: *std.build.CompileStep) void {
         other.addIncludePath(CFITS_DIR);
         other.linkLibrary(self.cfitsio);
-        other.addModule(self.zfitsio);
+        other.addModule("zigfitsio", self.zfitsio);
     }
 };
 
