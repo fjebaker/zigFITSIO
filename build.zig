@@ -1,5 +1,6 @@
 const std = @import("std");
 const zlib = @import("./vendor/zig-zlib/zlib.zig");
+const libcurl = @import("./vendor/zig-libcurl/libcurl.zig");
 
 fn _root() []const u8 {
     return (std.fs.path.dirname(@src().file) orelse ".");
@@ -72,8 +73,11 @@ pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.Comp
         lib.addCSourceFile(CFITS_DIR ++ f, &cflags);
     }
     lib.linkLibC();
+
     const z = zlib.create(b, target, .ReleaseSafe);
     z.link(lib, .{});
-    lib.linkSystemLibrary("curl");
+
+    const curl = zlib.create(b, target, .ReleaseSafe);
+    curl.link(lib, .{});
     return lib;
 }

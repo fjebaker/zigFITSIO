@@ -1,3 +1,6 @@
 [submodule "vendor/zig-zlib"]
 	path = vendor/zig-zlib
 	url = https://github.com/mattnite/zig-zlib
+[submodule "vendor/zig-libcurl"]
+	path = vendor/zig-libcurl
+	url = https://github.com/mattnite/zig-libcurl
