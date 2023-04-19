@@ -18,7 +18,7 @@ pub fn build(b: *std.Build) !void {
 
     b.installArtifact(libcfitsio);
 
-    _ = b.addModule("zfits", .{
+    _ = b.addModule("zfitsio", .{
         .source_file = .{ .path = "./src/main.zig" },
         .dependencies = &.{},
     });
@@ -43,6 +43,12 @@ pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.Comp
         .target = target,
         .optimize = .ReleaseSafe,
     });
+    // const lib = b.addSharedLibrary(.{
+    //     .name = "cfitsio",
+    //     .target = target,
+    //     .optimize = .ReleaseSafe,
+    //     .version = .{ .major = 0, .minor = 1 },
+    // });
 
     const sources = [_][]const u8{
         "buffers.c",     "cfileio.c",        "checksum.c",         "drvrfile.c",  "drvrmem.c",
@@ -79,5 +85,6 @@ pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.Comp
 
     const curl = zlib.create(b, target, .ReleaseSafe);
     curl.link(lib, .{});
+
     return lib;
 }

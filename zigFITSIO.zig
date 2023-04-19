@@ -16,11 +16,7 @@ pub const Library = struct {
 
 pub fn create(b: *std.Build, target: std.zig.CrossTarget) Library {
     const libcfitsio = zigFITSIO.createCFITSIO(b, target);
-    _ = b.addModule("zfits", .{
-        .source_file = .{ .path = ROOT ++ "./src/main.zig" },
-        .dependencies = &.{},
-    });
-    const zfitsio = b.addModule("zfits", .{
+    const zfitsio = b.addModule("zfitsio", .{
         .source_file = .{ .path = ROOT ++ "./src/main.zig" },
         .dependencies = &.{},
     });
