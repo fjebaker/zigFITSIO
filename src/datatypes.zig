@@ -85,18 +85,36 @@ pub const DataType = union(enum) {
     pub fn fromFITSString(s: FITSString) !DataType {
         var size: usize = 0;
         var dt: PrimativeType = undefined;
-        for (s, 0..) |t, i| {
+
+        var is_pointer: bool = false;
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            const t = s[i];
+
             if (t <= '9') {
                 continue;
             }
             dt = switch (t) {
                 'E' => .Float32,
                 'D' => .Float64,
+                'P' => {
+                    if (is_pointer) unreachable;
+                    is_pointer = true;
+                    continue;
+                },
                 // todo: haven't handled these yet
-                else => unreachable,
+                else => {
+                    std.debug.print("Unknown data type: {s}\n", .{s});
+                    unreachable;
+                },
             };
             // read in the size
-            size = try std.fmt.parseInt(usize, s[0..i], 10);
+            if (is_pointer) {
+                // xPd(SIZE)
+                size = try std.fmt.parseInt(usize, s[i + 2 .. s.len - 3], 10);
+            } else {
+                size = try std.fmt.parseInt(usize, s[0..i], 10);
+            }
             break;
         }
         if (size > 1) {
