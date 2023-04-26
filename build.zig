@@ -7,7 +7,7 @@ fn _root() []const u8 {
 }
 
 pub const ROOT = _root() ++ "/";
-pub const CFITS_DIR = ROOT ++ "vendor/cfitsio-4.0.0/";
+pub const CFITS_DIR = ROOT ++ "vendor/cfitsio-4.2.0/";
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
