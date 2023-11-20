@@ -1,4 +1,11 @@
 .{
     .name = "zfits",
+    .paths = .{""},
     .version = "0.0.1",
+    .dependencies = .{
+        .zlib = .{
+            .url = "https://github.com/andrewrk/libz/archive/master.tar.gz",
+            .hash = "12209983b338d5734ac4df5a95cbc6e49e95adc116dba53c4c60db2e5ca80754efa8",
+        }
+    }
 }
