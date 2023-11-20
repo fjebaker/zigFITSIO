@@ -21,10 +21,10 @@ pub fn open(path: []const u8) !Self {
     var fp: *c.fitsfile = undefined;
     // todo: check file exists, etc. here to generate nicer errors
     _ = c.fits_open_file(
-        @ptrCast([*c][*c]c.fitsfile, &fp),
-        @ptrCast([*c]const u8, path),
+        @as([*c][*c]c.fitsfile, @ptrCast(&fp)),
+        @as([*c]const u8, @ptrCast(path)),
         c.READONLY,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
 
@@ -35,7 +35,7 @@ pub fn close(self: *Self) void {
     var status: usize = 0;
     _ = c.fits_close_file(
         self.fp,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
 }
 
@@ -44,9 +44,9 @@ pub fn readNumRecords(self: *const Self) !usize {
     var nkeys: usize = 0;
     _ = c.fits_get_hdrspace(
         self.fp,
-        @ptrCast([*c]c_int, &(nkeys)),
+        @as([*c]c_int, @ptrCast(&(nkeys))),
         null,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return nkeys;
@@ -57,9 +57,9 @@ pub fn readRecord(self: *const Self, i: usize) !FITSRecord {
     var card: [CARD_BYTE_LENGTH]u8 = undefined;
     _ = c.fits_read_record(
         self.fp,
-        @intCast(c_int, i),
+        @as(c_int, @intCast(i)),
         &card,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return card;
@@ -70,11 +70,11 @@ pub fn readNumHDUs(self: *const Self) !usize {
     var count: c_int = 0;
     _ = c.fits_get_num_hdus(
         self.fp,
-        @ptrCast([*c]c_int, &count),
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&count)),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
-    return @intCast(usize, count);
+    return @as(usize, @intCast(count));
 }
 
 pub fn readCurrentHDUType(self: *const Self) !HDUType {
@@ -82,8 +82,8 @@ pub fn readCurrentHDUType(self: *const Self) !HDUType {
     var hdu_type: c_int = 0;
     _ = c.fits_get_hdu_type(
         self.fp,
-        @ptrCast([*c]c_int, &hdu_type),
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&hdu_type)),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return HDUType.translate(hdu_type);
@@ -94,9 +94,9 @@ pub fn selectHDU(self: *const Self, index: usize) !HDUType {
     var hdu_type: c_int = 0;
     _ = c.fits_movabs_hdu(
         self.fp,
-        @intCast(c_int, index),
-        @ptrCast([*c]c_int, &hdu_type),
-        @ptrCast([*c]c_int, &status),
+        @as(c_int, @intCast(index)),
+        @as([*c]c_int, @ptrCast(&hdu_type)),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return HDUType.translate(hdu_type);
@@ -104,8 +104,8 @@ pub fn selectHDU(self: *const Self, index: usize) !HDUType {
 
 pub fn getCurrentHDUIndex(self: *const Self) usize {
     var index: c_int = 0;
-    _ = c.fits_get_hdu_num(self.fp, @ptrCast([*c]c_int, &index));
-    return @intCast(usize, index);
+    _ = c.fits_get_hdu_num(self.fp, @as([*c]c_int, @ptrCast(&index)));
+    return @as(usize, @intCast(index));
 }
 
 pub fn getNumColumns(self: *const Self) !usize {
@@ -113,11 +113,11 @@ pub fn getNumColumns(self: *const Self) !usize {
     var n: c_int = 0;
     _ = c.fits_get_num_cols(
         self.fp,
-        @ptrCast([*c]c_int, &n),
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&n)),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
-    return @intCast(usize, n);
+    return @as(usize, @intCast(n));
 }
 
 pub fn getNumRows(self: *const Self) !usize {
@@ -127,11 +127,11 @@ pub fn getNumRows(self: *const Self) !usize {
     var n: c_long = 0;
     _ = c.fits_get_num_rows(
         self.fp,
-        @ptrCast([*c]c_long, &n),
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_long, @ptrCast(&n)),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
-    return @intCast(usize, n);
+    return @as(usize, @intCast(n));
 }
 
 pub const ReadColumnOptions = struct {
@@ -152,14 +152,14 @@ pub fn readColumnInto(
     _ = c.fits_read_col(
         self.fp,
         d_type,
-        @intCast(c_int, column_index),
-        @intCast(c_int, opt.first_row),
-        @intCast(c_int, opt.first_element),
-        @intCast(c_int, column.len),
+        @as(c_int, @intCast(column_index)),
+        @as(c_int, @intCast(opt.first_row)),
+        @as(c_int, @intCast(opt.first_element)),
+        @as(c_int, @intCast(column.len)),
         opt.null_value,
-        @ptrCast([*c]c_int, column.ptr),
-        @ptrCast([*c]c_int, &any_null),
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(column.ptr)),
+        @as([*c]c_int, @ptrCast(&any_null)),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
 }
@@ -184,7 +184,7 @@ pub fn readRecordInfo(self: *const Self, name: [:0]const u8) !FITSRecord {
         self.fp,
         name.ptr,
         &card,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return card;
@@ -202,9 +202,9 @@ pub fn readRecordValueTyped(
         self.fp,
         DataType.fromType(T).toFITS(),
         name.ptr,
-        @ptrCast(*anyopaque, &value),
+        @as(*anyopaque, @ptrCast(&value)),
         &comment,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return value;
@@ -220,9 +220,9 @@ pub fn readRecordValueString(
         self.fp,
         PrimativeType.toFITS(.String),
         name.ptr,
-        @ptrCast(*anyopaque, &value),
+        @as(*anyopaque, @ptrCast(&value)),
         &comment,
-        @ptrCast([*c]c_int, &status),
+        @as([*c]c_int, @ptrCast(&status)),
     );
     try handleErrorCode(status);
     return value;
