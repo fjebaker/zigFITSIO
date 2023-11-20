@@ -145,9 +145,9 @@ pub const HDU = union(HDUType) {
             format_name[0..5].* = "TFORM".*;
             unit_name[0..5].* = "TUNIT".*;
 
-            _ = std.fmt.formatIntBuf(label_name[5..], i, 10, .lower, .{ .alignment = .Left });
-            _ = std.fmt.formatIntBuf(format_name[5..], i, 10, .lower, .{ .alignment = .Left });
-            _ = std.fmt.formatIntBuf(unit_name[5..], i, 10, .lower, .{ .alignment = .Left });
+            _ = std.fmt.formatIntBuf(label_name[5..], i, 10, .lower, .{ .alignment = .left });
+            _ = std.fmt.formatIntBuf(format_name[5..], i, 10, .lower, .{ .alignment = .left });
+            _ = std.fmt.formatIntBuf(unit_name[5..], i, 10, .lower, .{ .alignment = .left });
 
             const label = try self.info.parent_file.readRecordValueString(&label_name);
             const format = try self.info.parent_file.readRecordValueString(&format_name);
