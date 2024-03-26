@@ -171,7 +171,7 @@ pub fn getColumnTyped(
     alloc: std.mem.Allocator,
     opt: ReadColumnOptions,
 ) ![]T {
-    var arr = try alloc.alloc(T, column_size);
+    const arr = try alloc.alloc(T, column_size);
     errdefer alloc.free(arr);
     try self.readColumnInto(T, column_index, arr, opt);
     return arr;
