@@ -4,8 +4,8 @@
     .version = "0.0.1",
     .dependencies = .{
         .zlib = .{
-            .url = "https://github.com/andrewrk/libz/archive/master.tar.gz",
-            .hash = "12209983b338d5734ac4df5a95cbc6e49e95adc116dba53c4c60db2e5ca80754efa8",
-        }
-    }
+            .url = "https://github.com/fjebaker/libz/archive/master.tar.gz",
+            .hash = "1220cf81763b1a42547a8176e7cb4ea25bc1a9c1fd10d8adef63a5105017bdd99e23",
+        },
+    },
 }

@@ -49,15 +49,10 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
 
     const libcfitsio = createCFITSIO(b, target);
-    inline for (CFITSIO_HEADERS) |header| {
-        libcfitsio.installHeader(CFITS_DIR ++ header, header);
-    }
-
     b.installArtifact(libcfitsio);
 
     _ = b.addModule("zfitsio", .{
-        .source_file = .{ .path = "./src/main.zig" },
-        .dependencies = &.{},
+        .root_source_file = .{ .path = "./src/main.zig" },
     });
 
     // todo: https://github.com/ziglang/zig/pull/14731
@@ -75,7 +70,7 @@ pub fn build(b: *std.Build) !void {
     test_step.dependOn(&main_test_runstep.step);
 }
 
-pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.CompileStep {
+pub fn createCFITSIO(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build.Step.Compile {
     const lib = b.addStaticLibrary(.{
         .name = "cfitsio",
         .target = target,
@@ -88,7 +83,7 @@ pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.Comp
     //     .version = .{ .major = 0, .minor = 1 },
     // });
 
-    const cflags = switch (target.getOsTag()) {
+    const cflags = switch (target.result.os.tag) {
         .macos => [2][]const u8{ "-O2", "-Dmacintosh" },
         else => [2][]const u8{ "-O2", "-Dg77Fortran" },
     };
@@ -101,6 +96,10 @@ pub fn createCFITSIO(b: *std.Build, target: std.zig.CrossTarget) *std.build.Comp
     const zlib = b.dependency("zlib", .{ .target = target, .optimize = .ReleaseSafe });
     const z = zlib.artifact("z");
     lib.linkLibrary(z);
+
+    inline for (CFITSIO_HEADERS) |header| {
+        lib.installHeader(CFITS_DIR ++ header, header);
+    }
 
     return lib;
 }
