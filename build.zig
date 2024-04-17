@@ -100,7 +100,7 @@ pub fn createCFITSIO(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build
     lib.linkLibrary(z);
 
     inline for (CFITSIO_HEADERS) |header| {
-        lib.installHeader(CFITS_DIR ++ header, header);
+        lib.installHeader(.{ .path = CFITS_DIR ++ header }, header);
     }
 
     return lib;

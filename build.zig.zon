@@ -5,7 +5,7 @@
     .dependencies = .{
         .zlib = .{
             .url = "https://github.com/fjebaker/libz/archive/master.tar.gz",
-            .hash = "1220cf81763b1a42547a8176e7cb4ea25bc1a9c1fd10d8adef63a5105017bdd99e23",
+            .hash = "122082c536e84e32c7c4803fb652cfdcd051f5e381e4395c29ec8c81bd034da12b36",
         },
     },
 }
