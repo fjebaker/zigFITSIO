@@ -52,14 +52,14 @@ pub fn build(b: *std.Build) !void {
     b.installArtifact(libcfitsio);
 
     const mod = b.addModule("zfitsio", .{
-        .root_source_file = .{ .path = "./src/main.zig" },
+        .root_source_file = b.path("./src/main.zig"),
     });
-    mod.addIncludePath(.{ .path = CFITS_DIR });
+    mod.addIncludePath(b.path(CFITS_DIR));
 
     // todo: https://github.com/ziglang/zig/pull/14731
 
     var main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "./src/main.zig" },
+        .root_source_file = b.path("./src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
@@ -91,7 +91,7 @@ pub fn createCFITSIO(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build
     };
 
     inline for (CFITSIO_SOURCES) |f| {
-        lib.addCSourceFile(.{ .file = .{ .path = CFITS_DIR ++ f }, .flags = &cflags });
+        lib.addCSourceFile(.{ .file = b.path(CFITS_DIR ++ f), .flags = &cflags });
     }
     lib.linkLibC();
 
@@ -100,7 +100,7 @@ pub fn createCFITSIO(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build
     lib.linkLibrary(z);
 
     inline for (CFITSIO_HEADERS) |header| {
-        lib.installHeader(.{ .path = CFITS_DIR ++ header }, header);
+        lib.installHeader(b.path(CFITS_DIR ++ header), header);
     }
 
     return lib;
